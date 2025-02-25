@@ -73,10 +73,7 @@ ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -v6
 
 ### 3. Monitor Encoder Data in ROS 2
 ```bash
-ros2 topic echo /encoder_ticks_1
-ros2 topic echo /encoder_ticks_2
-ros2 topic echo /encoder_ticks_3
-ros2 topic echo /encoder_ticks_4
+ros2 topic echo /encoder_ticks
 ```
 
 ## ❗️ Important Notes
