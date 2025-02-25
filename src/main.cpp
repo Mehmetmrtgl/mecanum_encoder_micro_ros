@@ -3,7 +3,7 @@
 #include <rcl/rcl.h>
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
-#include <std_msgs/msg/int32.h>
+#include <std_msgs/msg/int32_multi_array.h>
 
 #define ENCODER_A_1 13  // Enkoderin A kanalı (interrupt pin)
 #define ENCODER_B_1 12  // Enkoderin B kanalı
@@ -23,21 +23,16 @@ volatile long encoder_count_3 = 0;
 volatile long encoder_count_4 = 0;
 
 
-
 rcl_allocator_t allocator;
 rclc_support_t support;
 rcl_node_t node;
-rcl_publisher_t encoder_publisher_1;
-rcl_publisher_t encoder_publisher_2;
-rcl_publisher_t encoder_publisher_3;
-rcl_publisher_t encoder_publisher_4;
+rcl_publisher_t encoder_publisher;
 rcl_timer_t timer;
 rclc_executor_t executor;
 
+std_msgs__msg__Int32MultiArray msg;
 
-std_msgs__msg__Int32 msg_1, msg_2, msg_3, msg_4;
-
-
+// Hata kontrol makrosu
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if (temp_rc != RCL_RET_OK) { error_loop(); }}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if (temp_rc != RCL_RET_OK) { /* Hata durumu yönetilebilir */ }}
 
@@ -66,21 +61,18 @@ void IRAM_ATTR readEncoder4() {
 
 }
 
+// ROS2 timer callback (sends data every 100ms)
 void timer_callback(rcl_timer_t *timer, int64_t last_call_time) {
     if (timer == NULL) {
         return;
     }
 
-    msg_1.data = encoder_count_1;
-    msg_2.data = encoder_count_2;
-    msg_3.data = encoder_count_3;
-    msg_4.data = encoder_count_4;
+    msg.data.data[0] = encoder_count_1;
+    msg.data.data[1] = encoder_count_2;
+    msg.data.data[2] = encoder_count_3;
+    msg.data.data[3] = encoder_count_4;
 
-
-    RCSOFTCHECK(rcl_publish(&encoder_publisher_1, &msg_1, NULL));
-    RCSOFTCHECK(rcl_publish(&encoder_publisher_2, &msg_2, NULL));
-    RCSOFTCHECK(rcl_publish(&encoder_publisher_3, &msg_3, NULL));
-    RCSOFTCHECK(rcl_publish(&encoder_publisher_4, &msg_4, NULL));
+    RCSOFTCHECK(rcl_publish(&encoder_publisher, &msg, NULL));
 }
 
 void setup() {
@@ -102,35 +94,12 @@ void setup() {
     attachInterrupt(digitalPinToInterrupt(ENCODER_A_3), readEncoder3, RISING);
     attachInterrupt(digitalPinToInterrupt(ENCODER_A_4), readEncoder4, RISING);
 
-
+    // Initialize micro-ROS
     allocator = rcl_get_default_allocator();
     RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
 
+    // Node creation
     RCCHECK(rclc_node_init_default(&node, "micro_ros_platformio_node", "", &support));
-
-    RCCHECK(rclc_publisher_init_default(
-        &encoder_publisher_1,
-        &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
-        "encoder_ticks_1"));
-
-    RCCHECK(rclc_publisher_init_default(
-        &encoder_publisher_2,
-        &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
-        "encoder_ticks_2"));
-
-    RCCHECK(rclc_publisher_init_default(
-        &encoder_publisher_3,
-        &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
-        "encoder_ticks_3"));
-
-    RCCHECK(rclc_publisher_init_default(
-        &encoder_publisher_4,
-        &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
-        "encoder_ticks_4"));
 
     const unsigned int timer_timeout = 10;
     RCCHECK(rclc_timer_init_default(
@@ -139,14 +108,22 @@ void setup() {
         RCL_MS_TO_NS(timer_timeout),
         timer_callback));
 
-
+    // Executor creation
     RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
     RCCHECK(rclc_executor_add_timer(&executor, &timer));
 
-    msg_1.data = 0;
-    msg_2.data = 0;
-    msg_3.data = 0;
-    msg_4.data = 0;
+
+    RCCHECK(rclc_publisher_init_default(
+        &encoder_publisher,
+        &node,
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32MultiArray),
+        "encoder_ticks"));
+
+
+    // Initialize the array size and data array
+    msg.data.size = 4;  // 4 encoders
+    msg.data.capacity = 4;
+    msg.data.data = (int32_t*)malloc(msg.data.capacity * sizeof(int32_t));
 
 }
 
