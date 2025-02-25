@@ -68,7 +68,7 @@ pio run --target upload
 
 ### 2. Start the Micro-ROS Agent on Jetson Orin
 ```bash
-ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -v6
+ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0
 ```
 
 ### 3. Monitor Encoder Data in ROS 2
