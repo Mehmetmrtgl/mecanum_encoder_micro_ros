@@ -18,9 +18,6 @@ This project is a micro-ROS application running on ESP32. It reads data from fou
    - Configure your `platformio.ini` file accordingly.
 
 2. **Upload the Code to ESP32**
-   ```sh
-   pio run --target upload
-   ```
 
 3. **Start Serial Communication with micro-ROS**
    - Connect ESP32 to your computer and run the following command to start the micro-ROS serial agent:
