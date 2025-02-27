@@ -24,7 +24,7 @@ volatile long encoder_count_2 = 0;
 volatile long encoder_count_3 = 0;
 volatile long encoder_count_4 = 0;
 
-int counts_per_rev_ = 700;
+int counts_per_rev_ = 800;
 
 unsigned long last_time;
 long previous_encoder_count_1 = 0;
@@ -150,10 +150,10 @@ void setup() {
     set_microros_serial_transports(Serial);
     delay(100);
 
-    attachInterrupt(digitalPinToInterrupt(ENCODER_A_1), readEncoder1, RISING);
-    attachInterrupt(digitalPinToInterrupt(ENCODER_A_2), readEncoder2, RISING);
-    attachInterrupt(digitalPinToInterrupt(ENCODER_A_3), readEncoder3, RISING);
-    attachInterrupt(digitalPinToInterrupt(ENCODER_A_4), readEncoder4, RISING);
+    attachInterrupt(digitalPinToInterrupt(ENCODER_A_1), readEncoder1, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(ENCODER_A_2), readEncoder2, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(ENCODER_A_3), readEncoder3, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(ENCODER_A_4), readEncoder4, CHANGE);
 
     // Initialize micro-ROS
     allocator = rcl_get_default_allocator();
